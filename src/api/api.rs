@@ -3,6 +3,5 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         web::scope("/api")
             .service(create_user)
 
-
     );
 }

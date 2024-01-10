@@ -1,6 +1,8 @@
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder, Result};
 use serde::{Serialize};
-
+use repository::app_state::AppState;
+//use crate::config::AppConfig;
+use lazy_static::lazy_static;
 mod api;
 mod models;
 mod repository;
@@ -9,6 +11,13 @@ mod repository;
 pub struct Response {
     pub status: String,
     pub message: String,
+}
+
+lazy_static! {
+   // pub static ref SETTINGS: AppConfig = {
+    //    let cli_options = cli::Options::new();
+      //  AppConfig::new(cli_options.config_dir.as_ref()).unwrap()
+//    };
 }
 
 #[get("/health")]
@@ -31,20 +40,23 @@ async fn not_found() -> Result<HttpResponse> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
- //   console_log::init_with_level(Level::Debug);
+    std::env::set_var("RUST_LOG", "debug");
+    env_logger::init();
+ //   let the_db = repository::database::Database::new();
+    
+    //let new_data = actix_web::web::Data::new().await;
+//    let data = actix_web::web::Data::new(new_data);
 
-    let todo_db = repository::database::Database::new();
-    //let mut hash = HashMap::new();
-    
-    //hash.insert("Daniel",todo_db);
-    // dbg!(hash);
-    
-    //println!("after {}", todo_db);
-    let app_data = web::Data::new(todo_db);
+let app_state = AppState::new().await;
+let app_state = actix_web::web::Data::new(app_state);
+    //let app_state = app_state::AppState::new().await;
+//let app_data = actix_web::web::Data::new(new_data);
+   // let app_data = web::Data::new(the_db);
     HttpServer::new(move ||
          App::new()
-            .app_data(app_data.clone())
-            .configure(api::api::config)
+            .app_data(app_state.clone())
+        //    .configure(api::user::config)
+            .configure(api::group::config)
             .service(healthcheck)
             .default_service(web::route().to(not_found)).
             wrap(actix_web::middleware::Logger::default())

@@ -1,10 +1,17 @@
 use std::fmt::Error;
 use chrono::prelude::*;
+use crate::models::user::User;
+use std::sync::{Arc, Mutex};
 
-impl Database for User {
+pub struct UserDatabase {
+    pub users: Arc<Mutex<Vec<User>>>,
+}
 
-pub fn create_user(&self, todo: Todo) -> Result<User, Error> {
-    let mut todos = self.todos.lock().unwrap();
+
+impl UserDatabase {
+
+pub fn create_user(&self, user: User) -> Result<User, Error> {
+    let mut users = self.users.lock().unwrap();
     let id = uuid::Uuid::new_v4().to_string();
     let created_at = Utc::now();
     let updated_at = Utc::now();
@@ -14,7 +21,32 @@ pub fn create_user(&self, todo: Todo) -> Result<User, Error> {
         updated_at: Some(updated_at),
         ..user
     };
-    user.push(user.clone());
-    Ok(todo)
+    users.push(user.clone());
+    Ok(user)
 }
+
+pub fn get_user(&self, user: User) -> Result<User, Error> {
+    let mut users = self.users.lock().unwrap();
+    let id = uuid::Uuid::new_v4().to_string();
+    let created_at = Utc::now();
+    let updated_at = Utc::now();
+    let user = User {
+        id: Some(id),
+        created_at: Some(created_at),
+        updated_at: Some(updated_at),
+        ..user
+    };
+    users.push(user.clone());
+    Ok(user)
+}
+
+pub fn get_user_by_id(&self, id: &str) -> Option<User> {
+    let users = self.users.lock().unwrap();
+    users.iter().find(|user| user.id == Some(id.to_string())).cloned()
+}
+
+
+
+
+
 }
