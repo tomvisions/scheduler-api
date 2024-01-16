@@ -1,67 +1,63 @@
-use actix_web::{get, web, App, HttpResponse, HttpServer, Responder, Result};
-use serde::{Serialize};
-use repository::app_state::AppState;
-//use crate::config::AppConfig;
-use lazy_static::lazy_static;
+mod schema;
 mod api;
-mod models;
-mod repository;
+mod model;
 
-#[derive(Serialize)]
-pub struct Response {
-    pub status: String,
-    pub message: String,
-}
+use actix_cors::Cors;
+use actix_web::middleware::Logger;
+use actix_web::{http::header, web, App, HttpServer};
+use dotenv::dotenv;
+use sqlx::mysql::{MySqlPool, MySqlPoolOptions};
+use crate::api::usher_group;
 
-lazy_static! {
-   // pub static ref SETTINGS: AppConfig = {
-    //    let cli_options = cli::Options::new();
-      //  AppConfig::new(cli_options.config_dir.as_ref()).unwrap()
-//    };
-}
-
-#[get("/health")]
-async fn healthcheck() -> impl Responder {
-    let response = Response {
-        status: "200".to_string(),
-        message: "Everything is working fine".to_string(),
-    };
-    HttpResponse::Ok().json(response)
-}
-
-
-async fn not_found() -> Result<HttpResponse> {
-    let response = Response {
-        status: "404".to_string(),
-        message: "Resource not found".to_string(),
-    };
-    Ok(HttpResponse::NotFound().json(response))
+pub struct AppState {
+    db: MySqlPool,
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    std::env::set_var("RUST_LOG", "debug");
+    if std::env::var_os("RUST_LOG").is_none() {
+        std::env::set_var("RUST_LOG", "actix_web=info");
+    }
+    dotenv().ok();
     env_logger::init();
- //   let the_db = repository::database::Database::new();
-    
-    //let new_data = actix_web::web::Data::new().await;
-//    let data = actix_web::web::Data::new(new_data);
 
-let app_state = AppState::new().await;
-let app_state = actix_web::web::Data::new(app_state);
-    //let app_state = app_state::AppState::new().await;
-//let app_data = actix_web::web::Data::new(new_data);
-   // let app_data = web::Data::new(the_db);
-    HttpServer::new(move ||
-         App::new()
-            .app_data(app_state.clone())
-        //    .configure(api::user::config)
-            .configure(api::group::config)
-            .service(healthcheck)
-            .default_service(web::route().to(not_found)).
-            wrap(actix_web::middleware::Logger::default())
-        )
-        .bind(("127.0.0.1", 8080))?
-        .run()
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    print!("{}", database_url);
+    let pool = match MySqlPoolOptions::new()
+        .max_connections(10)
+        .acquire_timeout(std::time::Duration::from_secs(120))
+        .connect(&database_url)
         .await
-}       
+    {
+        Ok(pool) => {
+            println!("✅Connection to the database is successful!");
+            pool
+        }
+        Err(err) => {
+            println!("🔥 Failed to connect to the database: {:?}", err);
+            std::process::exit(1);
+        }
+    };
+
+    println!("🚀 Server started successfully");
+
+    HttpServer::new(move || {
+        let cors = Cors::default()
+           // .allowed_origin("http://localhost:3000")
+            .allowed_methods(vec!["GET", "POST", "PATCH", "DELETE"])
+            .allowed_headers(vec![
+                header::CONTENT_TYPE,
+              //  header::AUTHORIZATION,
+                header::ACCEPT,
+            ])
+            .supports_credentials();
+        App::new()
+            .app_data(web::Data::new(AppState { db: pool.clone() }))
+            .configure(api::common::config)
+            .wrap(cors)
+            .wrap(Logger::default())
+    })
+    .bind(("127.0.0.1", 8000))?
+    .run()
+    .await
+}
