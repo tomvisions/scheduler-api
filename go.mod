@@ -6,6 +6,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/aws/aws-lambda-go v1.46.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/jmoiron/sqlx v1.3.5 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/labstack/echo/v4 v4.11.4 // indirect

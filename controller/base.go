@@ -39,12 +39,12 @@ func ApplyMarshal(jsonInterface map[string]interface{}) []byte {
 }
 
 func ConvertStringToInt(stringData gjson.Result) (int, error) {
-	fmt.Printf("json stirng data marsh string hwerw: %s\n", stringData)
-	fmt.Printf("json stirng data marsh string raw: %s\n", stringData.Raw)
+	//	fmt.Printf("json stirng data marsh string hwerw: %s\n", stringData)
+	//	fmt.Printf("json stirng data marsh string raw: %s\n", stringData.Raw)
 	intData, err := strconv.Atoi(string([]byte(stringData.Raw)))
 	//	intData, err := strconv.Atoi(stringData)
 	//intNumberMonth, err := strconv.Atoi(startMonth)
-	fmt.Printf("json stirng data marsh int: %d\n", intData)
+	//	fmt.Printf("json stirng data marsh int: %d\n", intData)
 	return intData, err
 }
 
@@ -55,16 +55,16 @@ func ConvertIntToString(number int) string {
 }
 
 func GetDataFromJSONByKey(jsonInterface map[string]interface{}, key string) (int, error) {
-	fmt.Printf("json stirng data interface: %s\n", jsonInterface)
-	fmt.Printf("json stirng key: %s\n", key)
+	//	fmt.Printf("json stirng data interface: %s\n", jsonInterface)
+	//	fmt.Printf("json stirng key: %s\n", key)
 
 	jsonBytes := ApplyMarshal(jsonInterface)
-	fmt.Printf("json stirng data marsh: %s\n", jsonBytes)
+	//	fmt.Printf("json stirng data marsh: %s\n", jsonBytes)
 
 	valueBytes := gjson.GetBytes(jsonBytes, key)
-	fmt.Printf("number starting month: %s\n", valueBytes)
+	//	fmt.Printf("number starting month: %s\n", valueBytes)
 	valueInt, err := ConvertStringToInt(valueBytes)
-	fmt.Printf("json stirng data marsh int: %d\n", valueInt)
+	//	fmt.Printf("json stirng data marsh int: %d\n", valueInt)
 	return valueInt, err
 }
 
@@ -72,15 +72,15 @@ func GetJSONRawBody(c echo.Context) map[string]interface{} {
 
 	jsonBody := make(map[string]interface{})
 	err := json.NewDecoder(c.Request().Body).Decode(&jsonBody)
-	fmt.Printf("error cehck: %s\n", err)
+	//fmt.Printf("error cehck: %s\n", err)
 	if err != nil {
 
 		//fmt.Printf("not nil jsonDatajson data: %s\n", err)
 		//log.Error("empty json body")
 		return nil
 	} else {
-		fmt.Printf("nil here jsonDatajson dataaaaa: %s\n", err)
-		fmt.Printf("end")
+		//	fmt.Printf("nil here jsonDatajson dataaaaa: %s\n", err)
+		//	fmt.Printf("end")
 		return jsonBody
 	}
 }

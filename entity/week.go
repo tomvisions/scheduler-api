@@ -2,11 +2,11 @@ package entity
 
 type Week struct {
 	ID     string `db:"id"`
-	Hour   string `db:"hour"`
-	Minute string `db:"minute"`
-	Day    string `db:"day"`
-	Month  string `db:"month"`
-	Year   string `db:"year"`
+	Hour   int    `db:"hour"`
+	Minute int    `db:"minute"`
+	Day    int    `db:"day"`
+	Month  int    `db:"month"`
+	Year   int    `db:"year"`
 }
 
 type Analytics struct {

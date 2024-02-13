@@ -10,29 +10,21 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func daysIn(m time.Month, year int) int {
-	return time.Date(year, m+1, 0, 0, 0, 0, 0, time.UTC).Day()
+func daysInMonth(m int, year int) int {
+
+	return time.Date(year, time.Month(m)+1, 0, 0, 0, 0, 0, time.UTC).Day()
+}
+
+func daysOfWeek(m int, d int, year int) time.Weekday {
+
+	return time.Date(year, time.Month(m)+1, d, 0, 0, 0, 0, time.UTC).Weekday()
 }
 
 func AddWeek(c echo.Context) error {
-
-	months := map[string]interface{}{
-		"1":  31,
-		"2":  28,
-		"3":  31,
-		"4":  30,
-		"5":  31,
-		"6":  30,
-		"7":  31,
-		"8":  31,
-		"9":  30,
-		"10": 31,
-		"11": 30,
-		"12": 31,
-	}
+	var week e.Week
 
 	//var week e.CreateWeek
-	fmt.Println("start of addweek")
+	//fmt.Println("start of addweek")
 	//	var week e.CreateWeek
 	//	err := c.Bind(&week)
 	jsonInterface := GetJSONRawBody3(c)
@@ -42,19 +34,25 @@ func AddWeek(c echo.Context) error {
 	//	if err != nil {
 
 	//	}
-	var monthDays = 0
+	//var monthDays = 0
 	//	boot := json.Unmarshal(test, &e.CreateWeek)
 	//fmt.Printf("the helloa: %s\n", jsonBytes)
 	/*endDay := gjson.GetBytes(test2, "end.day")
 	endMonth := gjson.GetBytes(test2, "end.month")
 	endYear := gjson.GetBytes(test2, "end.year")
 	startDay := gjson.GetBytes(test2, "start.day") */
-
+	massTimeDay, err := GetDataFromJSONByKey(jsonInterface, "massTime.day")
+	massTimeMonth, err := GetDataFromJSONByKey(jsonInterface, "massTime.month")
+	massTimeYear, err := GetDataFromJSONByKey(jsonInterface, "massTime.year")
+	massTimeHour, err := GetDataFromJSONByKey(jsonInterface, "massTime.hour")
+	massTimeMinute, err := GetDataFromJSONByKey(jsonInterface, "massTime.minute")
+	startYear, err := GetDataFromJSONByKey(jsonInterface, "start.year")
 	startMonth, err := GetDataFromJSONByKey(jsonInterface, "start.month")
 
-	if err != nil {
+	//endDay, err := GetDataFromJSONByKey(jsonInterface, "end.day")
+	startDay, err := GetDataFromJSONByKey(jsonInterface, "start.day")
+	endDay, err := GetDataFromJSONByKey(jsonInterface, "end.day")
 
-	}
 	endMonth, err := GetDataFromJSONByKey(jsonInterface, "end.month")
 
 	//	startMonth := gjson.GetBytes(jsonBytes, "start.month")
@@ -72,20 +70,128 @@ func AddWeek(c echo.Context) error {
 	fmt.Printf("booh: %d\n", too)
 	fmt.Printf("json data start month: %s\n", startMonth.Num)
 	fmt.Printf("json data start month: %s\n", startMonth.Type) */
-	for i := startMonth; i <= endMonth; i++ {
-		fmt.Printf("tart month: %s\n", startMonth)
-		fmt.Printf("json data at string: %s\n", ApplyMarshal(months))
-		fmt.Printf("json data start month: %d\n", i)
 
-		test, err := GetDataFromJSONByKey(months, ConvertIntToString(i))
-		if err != nil {
+	//dayOfWeekMassTime := daysOfWeek(massTimeMonth, massTimeDay, massTimeYear)
+	//fmt.Printf("day of week: %s\n", dayOfWeekMassTime)
+
+	daytoCheck := startDay
+	var dayEndToCheck int = endDay
+
+	for i := startMonth; i <= endMonth; i++ {
+		if (daytoCheck != startDay) && (startMonth == massTimeMonth) {
+			fmt.Printf("day going reset start\n")
+			dayOfWeekMassTime := daysOfWeek(massTimeMonth, massTimeDay, massTimeYear)
+			fmt.Printf("day of the week is : %d\n", dayOfWeekMassTime)
+
+			daytoCheck = 1
+			for b := 1; b <= 8; b++ {
+				fmt.Printf("day going reset: %d\n", b)
+				checkDay := daysOfWeek(massTimeMonth, b, massTimeYear)
+				if dayOfWeekMassTime == checkDay {
+					daytoCheck = b
+				}
+			}
 
 		}
-		fmt.Printf("json data: %d\n", test)
-		//test, err := json.Marshal(months[i])
-		monthDays += test
+		fmt.Printf("start of for month loop %d\n", i)
+		for dateLoop := true; dateLoop; {
+			fmt.Printf("begin of loop\n")
+			//			fmt.Printf("start month: %d\n", startMonth)//
+			//			fmt.Printf("massTimeMonth: %d\n", startMonth)//
+			//		fmt.Printf("startYear: %d\n", startYear)
+			//		fmt.Printf("massTimeYear: %d\n", massTimeYear)
+			fmt.Printf("massTimeDay: %d\n", massTimeDay)
+
+			fmt.Printf("startDay: %d\n", daytoCheck)
+			fmt.Printf("endDay: %d\n", endDay)
+			//	fmt.Printf("tart month: %s\n", startMonth)
+			//	fmt.Printf("json data at string: %s\n", ApplyMarshal(months))
+			//	fmt.Printf("json data start month: %d\n", i)
+
+			//if startMonth == massTimeMonth && startYear == massTimeYear {
+
+			fmt.Printf("next in loop\n")
+			var totalDays int = daysInMonth(i, startYear)
+
+			if startMonth < endMonth {
+				dayEndToCheck = totalDays
+			}
+			if daytoCheck > dayEndToCheck && (startMonth == massTimeMonth) {
+				fmt.Printf("dateLoop is false\n")
+				dateLoop = false
+				continue
+			}
+			fmt.Printf("after first check\n")
+			fmt.Printf("massTimeDay: %d\n", massTimeDay)
+			fmt.Printf("startDay: %d\n", daytoCheck)
+			if (startMonth == massTimeMonth) && (daytoCheck < massTimeDay) {
+				fmt.Printf("reset daytocheck next in loop lalalala\n")
+				daytoCheck = massTimeDay
+			}
+
+			week.Day = daytoCheck
+			week.Hour = massTimeHour
+			week.Minute = massTimeMinute
+			week.Month = i
+			week.Year = startYear
+			fmt.Printf("befre entering model\n")
+			m.AddWeek(&week)
+			//	err := c.Bind(&week)
+
+			if daytoCheck+7 > totalDays {
+				dateLoop = false
+				fmt.Printf("over month %d\n", daytoCheck)
+			} else {
+				fmt.Printf("before  7 %d\n", daytoCheck)
+				daytoCheck = daytoCheck + 7
+				fmt.Printf("adding 7 %d\n", daytoCheck)
+				fmt.Printf("dateloop 7 %t\n", dateLoop)
+			}
+
+			//	} else {
+			//		fmt.Printf("wtf is going on\n")
+			//	}
+
+			//			startDay
+
+			//monthDays += daydInMonth
+
+		}
+
+		//	fmt.Printf("json data outside days: %d\n", massTimeDay)
+		//	fmt.Printf("json data outside days cool: %d\n", startDay)
+
+		//	fmt.Printf("json data type outside days: %s\n", reflect.TypeOf(massTimeDay))
+		//	fmt.Printf("json data type outside days cool: %s\n", reflect.TypeOf(startDay))
+
+		//	if startDay < massTimeDay {
+		//var daysbetweenStartDayAndMassTime int = int(massTimeDay) - int(startDay)
+		//
+		//fmt.Printf("json data outside dddddays: %d\n", daysbetweenStartDayAndMassTime)
+		//		daydInMonth := daysInMonth(i, startYear)
+		///	day := daysIn(startDay, startYear)
+		//		//if startDay < massTimeDay {
+
+		//	massTimeDay := startDay
+		//
+		//		fmt.Printf("json data outside days33: %d\n", daydInMonth)
+		//fmt.Printf("json data outside days cool: %d\n", daydInMonth)
+
+		//		for dateLoop := true; dateLoop; dateLoop = !true {
+
+		//monthDays += daydInMonth
+
 	}
-	fmt.Printf("json data: %d\n", monthDays)
+
+	//test, err := GetDataFromJSONByKey(months, ConvertIntToString(i))
+	if err != nil {
+
+	}
+	//	fmt.Printf("json data: %d\n", test)
+	//test, err := json.Marshal(months[i])
+	//	monthDays += testing
+
+	//fmt.Printf("json data: %d\n", monthDays)
 	//	for i := startDay; i < 5; i++ {
 	//		sum +=
 	//	}
