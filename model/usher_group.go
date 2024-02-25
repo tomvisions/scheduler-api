@@ -5,61 +5,127 @@ import (
 	"log"
 	"scheduler-api/db"
 	e "scheduler-api/entity"
+	"strings"
 
 	sg "github.com/Masterminds/squirrel"
 )
 
-func GetUsherGroups() ([]e.Gallery, error) {
+func AddUsherGroup(usherGroup *e.UsherGroup) error {
+	//now := time.Now()
+	id := strings.ToLower(usherGroup.Name)
+	id = strings.Trim(id, " ")
+	id = strings.Replace(id, " ", "-", -1)
+	fmt.Printf("id2 valueL: %s\n", id)
 
-	var galleryList []e.Gallery
-	gallery := e.Gallery{}
-	gallerySQL, args, err := sg.Select("gallery.id, gallery.image_name, gallery.gallery_name, gallery.image_name, gallery.slug, category.category_name, tag.tag_name").
-		From("gallery").
-		LeftJoin("category ON gallery.category = category.id").
-		LeftJoin("tag ON tag.id = gallery.tag").
-		Where("gallery.main_featured = 1").
+	const query = `INSERT INTO usher_group (id, title, description) VALUES (?, ?, ?)`
+	tx, err := db.DB.Begin()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(query, id, usherGroup.Name, usherGroup.Description)
+	fmt.Printf("err valueL: %s\n", err)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	tx.Commit()
+
+	return nil
+}
+
+func GetUsherGroupsKV() ([]e.UsherGroup, error) {
+
+	var usherGroupList []e.UsherGroup
+	usherGroup := e.UsherGroup{}
+
+	usherGroupSQL, args, err := sg.Select("usher_group.id, usher_group.name, usher_group.description, usher_group.hour, usher_group.minute, usher_group.day").
+		From("usher_group").
 		ToSql()
 
-	//	fmt.Println(gallerySQL)
+	fmt.Println(usherGroupSQL)
 	fmt.Println(args)
 
-	//	fmt.Println("here")
-	rows, err := db.DB.Queryx(gallerySQL)
+	rows, err := db.DB.Queryx(usherGroupSQL)
 
 	if err != nil {
 		panic(err)
 	}
-
 	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.StructScan(&gallery)
+		err := rows.StructScan(&usherGroup)
 
 		if err != nil {
+			fmt.Println("erri with  scan")
+
 			log.Fatalln(err)
 		}
 
-		galleryList = append(galleryList, gallery)
+		usherGroupList = append(usherGroupList, usherGroup)
 	}
 
 	err = rows.Err()
-	return galleryList, err
+	return usherGroupList, err
 }
 
-func GetUsherGroupById(category string) ([]e.Gallery, error) {
-	var galleryList []e.Gallery
-	fmt.Println(category)
-	gallery := e.Gallery{}
-	gallerySQL, args, err := sg.Select("gallery.id, gallery.image_name, gallery.gallery_name, gallery.image_name, gallery.slug, category.category_name, tag.tag_name").
-		From("gallery").
-		LeftJoin("category ON gallery.category = category.id").
-		LeftJoin("tag ON tag.id = gallery.tag").
-		Where(sg.Eq{"gallery.category": category, "gallery.featured": 1}).ToSql()
+func GetUsherGroups(pageIndex uint64, pageSize uint64, field string, order string) ([]e.UsherGroup, error) {
 
-	fmt.Println(gallerySQL)
+	var usherGroupList []e.UsherGroup
+	usherGroup := e.UsherGroup{}
+	offset := ((pageIndex - 1) * pageSize)
+
+	orderBy := fmt.Sprintf("%s %s", field, order)
+
+	usherGroupSQL, args, err := sg.Select("usher_group.id, usher_group.name, usher_group.description, usher_group.hour, usher_group.minute, usher_group.day").
+		From("usher_group").
+		OrderBy(orderBy).
+		Limit(pageSize).
+		Offset(offset).
+		//		LeftJoin("category ON gallery.category = category.id").
+		//		LeftJoin("tag ON tag.id = gallery.tag").
+		//		Where("gallery.main_featured = 1").
+		ToSql()
+
+	fmt.Println(usherGroupSQL)
 	fmt.Println(args)
 
-	rows, err := db.DB.Queryx(gallerySQL, category, 1)
+	rows, err := db.DB.Queryx(usherGroupSQL)
+
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.StructScan(&usherGroup)
+
+		if err != nil {
+			fmt.Println("erri with  scan")
+
+			log.Fatalln(err)
+		}
+
+		usherGroupList = append(usherGroupList, usherGroup)
+	}
+
+	err = rows.Err()
+	return usherGroupList, err
+}
+
+func GetUsherGroupById(id string) (e.UsherGroup, error) {
+	fmt.Println(id)
+	usherGroup := e.UsherGroup{}
+	usherGroupSQL, args, err := sg.Select("usher_group.id, usher_group.name, usher_group.description, usher_group.day, usher_group.day, usher_group.hour, usher_group.minute").
+		From("usher_group").
+		Where(sg.Eq{"id": id}).ToSql()
+
+	fmt.Println(usherGroupSQL)
+	fmt.Println(args)
+
+	rows, err := db.DB.Queryx(usherGroupSQL, id)
 
 	if err != nil {
 		panic(err)
@@ -69,15 +135,14 @@ func GetUsherGroupById(category string) ([]e.Gallery, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.StructScan(&gallery)
+		err := rows.StructScan(&usherGroup)
 
 		if err != nil {
 			log.Fatalln(err)
 		}
-
-		galleryList = append(galleryList, gallery)
 	}
 
 	err = rows.Err()
-	return galleryList, err
+
+	return usherGroup, err
 }

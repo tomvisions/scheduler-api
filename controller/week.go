@@ -81,12 +81,13 @@ func AddWeek(c echo.Context) error {
 		if (daytoCheck != startDay) && (startMonth == massTimeMonth) {
 			fmt.Printf("day going reset start\n")
 			dayOfWeekMassTime := daysOfWeek(massTimeMonth, massTimeDay, massTimeYear)
-			fmt.Printf("day of the week is : %d\n", dayOfWeekMassTime)
+			fmt.Printf("day of the week is : %s\n", dayOfWeekMassTime)
 
 			daytoCheck = 1
 			for b := 1; b <= 8; b++ {
 				fmt.Printf("day going reset: %d\n", b)
-				checkDay := daysOfWeek(massTimeMonth, b, massTimeYear)
+				checkDay := daysOfWeek(startMonth, b, massTimeYear)
+				fmt.Printf("day of the week checkday : %s\n", checkDay)
 				if dayOfWeekMassTime == checkDay {
 					daytoCheck = b
 				}
@@ -124,7 +125,7 @@ func AddWeek(c echo.Context) error {
 			fmt.Printf("after first check\n")
 			fmt.Printf("massTimeDay: %d\n", massTimeDay)
 			fmt.Printf("startDay: %d\n", daytoCheck)
-			if (startMonth == massTimeMonth) && (daytoCheck < massTimeDay) {
+			if (i == massTimeMonth) && (daytoCheck < massTimeDay) {
 				fmt.Printf("reset daytocheck next in loop lalalala\n")
 				daytoCheck = massTimeDay
 			}

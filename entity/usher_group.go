@@ -2,8 +2,9 @@ package entity
 
 type UsherGroup struct {
 	ID          string `db:"id"`
-	Title       string `db:"title"`
+	Name        string `db:"name"`
 	Description string `db:"description"`
-	CreatedAt   string `db:"created_at"`
-	UpdatedAt   string `db:"emupdated_atail"`
+	Day         string `db:"day"`
+	Hour        int    `db:"hour"`
+	Minute      int    `db:"minute"`
 }

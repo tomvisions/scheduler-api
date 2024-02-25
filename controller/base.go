@@ -48,6 +48,19 @@ func ConvertStringToInt(stringData gjson.Result) (int, error) {
 	return intData, err
 }
 
+func ConvertStructToJSON(bytesData []byte) map[string]interface{} {
+	var jsonMap map[string]interface{}
+
+	stringData := string(bytesData[:])
+
+	stringDataReady := fmt.Sprintf("{\"data\": %s}", stringData)
+
+	json.Unmarshal([]byte(stringDataReady), &jsonMap)
+
+	return jsonMap
+
+}
+
 func ConvertIntToString(number int) string {
 	intNumberMonth := strconv.Itoa(number)
 
