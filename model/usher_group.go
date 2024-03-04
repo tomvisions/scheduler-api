@@ -17,14 +17,14 @@ func AddUsherGroup(usherGroup *e.UsherGroup) error {
 	id = strings.Replace(id, " ", "-", -1)
 	fmt.Printf("id2 valueL: %s\n", id)
 
-	const query = `INSERT INTO usher_group (id, title, description) VALUES (?, ?, ?)`
+	const query = `INSERT INTO usher_group (id, name, description, day, hour, minute) VALUES (?, ?, ?, ?, ?, ?)`
 	tx, err := db.DB.Begin()
 
 	if err != nil {
 		return err
 	}
 
-	_, err = tx.Exec(query, id, usherGroup.Name, usherGroup.Description)
+	_, err = tx.Exec(query, id, usherGroup.Name, usherGroup.Description, usherGroup.Day, usherGroup.Hour, usherGroup.Minute)
 	fmt.Printf("err valueL: %s\n", err)
 	if err != nil {
 		tx.Rollback()
@@ -45,8 +45,9 @@ func GetUsherGroupsKV() ([]e.UsherGroup, error) {
 		From("usher_group").
 		ToSql()
 
-	fmt.Println(usherGroupSQL)
-	fmt.Println(args)
+	if args == nil {
+
+	}
 
 	rows, err := db.DB.Queryx(usherGroupSQL)
 
@@ -59,7 +60,7 @@ func GetUsherGroupsKV() ([]e.UsherGroup, error) {
 		err := rows.StructScan(&usherGroup)
 
 		if err != nil {
-			fmt.Println("erri with  scan")
+			fmt.Println("error with  scan")
 
 			log.Fatalln(err)
 		}

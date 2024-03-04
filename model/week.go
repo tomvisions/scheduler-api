@@ -9,16 +9,16 @@ import (
 func AddWeek(week *e.Week) error {
 	//now := time.Now()
 	//week.ID = "sdsdfsdfsdf"
-	fmt.Printf("about to insert into db\n")
-	const query = `INSERT INTO week (id, hour,minute, day, month, year) VALUES (?, ?, ?, ?, ?, ?)`
+	//fmt.Printf("about to insert into db\n")
+	const query = `INSERT INTO week (id, hour,minute, day, month, year, usher_group) VALUES (?, ?, ?, ?, ?, ?, ?)`
 	tx, err := db.DB.Begin()
 	if err != nil {
 		return err
 	}
 
-	id := fmt.Sprintf("%d-%d-%d-%d-%d", week.Hour, week.Minute, week.Day, week.Month, week.Year)
+	id := fmt.Sprintf("%d-%d-%d-%d-%d-%s", week.Hour, week.Minute, week.Day, week.Month, week.Year, week.UsherGroup)
 
-	_, err = tx.Exec(query, id, week.Hour, week.Minute, week.Day, week.Month, week.Year)
+	_, err = tx.Exec(query, id, week.Hour, week.Minute, week.Day, week.Month, week.Year, week.UsherGroup)
 
 	if err != nil {
 		fmt.Printf("Error in SQL: %s\n", err)

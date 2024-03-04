@@ -51,25 +51,47 @@ func GetUsherGroupsById(c echo.Context) error {
 	return c.JSON(http.StatusOK, userGroup)
 }
 
-func GetUserGroupKeyValue(c echo.Context) error {
+func GetUserGroupLabelValue(c echo.Context) error {
+	var usherGroupKeyValueArray []e.UsherGroupKV
+	var usherGroupKeyValue e.UsherGroupKV
+
 	usherGroupList, err := m.GetUsherGroupsKV()
 
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, "could not find category")
+	//fmt.Printf("\n\n\n1%v1n\n\n", usherGroupList)
+
+	//v := reflect.ValueOf(usherGroupList)
+
+	for i := 0; i < len(usherGroupList); i++ {
+		usherGroup := usherGroupList[i]
+
+		test := map[string]interface{}{"label": usherGroup.Name, "value": usherGroup.ID}
+
+		b, err := json.Marshal(test)
+		json.Unmarshal([]byte(b), &usherGroupKeyValue)
+
+		if err == nil {
+
+		}
+
+		usherGroupKeyValueArray = append(usherGroupKeyValueArray, usherGroupKeyValue)
 	}
 
-	return c.JSON(http.StatusOK, usherGroupList)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, "could not find usher group")
+	}
+
+	return c.JSON(http.StatusOK, usherGroupKeyValueArray)
 }
 
-func AddUserUsherGroup(c echo.Context) error {
-	var userUsherGroup e.UserUsherGroup
-	err := c.Bind(&userUsherGroup)
+func AddUsherGroup(c echo.Context) error {
+	var usherGroup e.UsherGroup
+	err := c.Bind(&usherGroup)
 
 	if err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, err.Error())
 	}
 
-	err = m.AddUserUsherGroup(&userUsherGroup)
+	err = m.AddUsherGroup(&usherGroup)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, "could not create new usher group")

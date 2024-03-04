@@ -1,12 +1,13 @@
 package entity
 
 type Week struct {
-	ID     string `db:"id"`
-	Hour   int    `db:"hour"`
-	Minute int    `db:"minute"`
-	Day    int    `db:"day"`
-	Month  int    `db:"month"`
-	Year   int    `db:"year"`
+	ID         string `db:"id"`
+	Hour       int    `db:"hour"`
+	Minute     int    `db:"minute"`
+	Day        int    `db:"day"`
+	Month      int    `db:"month"`
+	Year       int    `db:"year"`
+	UsherGroup string `db:"usher_group"`
 }
 
 type Analytics struct {

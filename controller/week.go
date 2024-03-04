@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	e "scheduler-api/entity"
 	m "scheduler-api/model"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -22,209 +24,67 @@ func daysOfWeek(m int, d int, year int) time.Weekday {
 
 func AddWeek(c echo.Context) error {
 	var week e.Week
+	//var jsonMap map[string]interface{}
+	var UsherGroup e.UsherGroupKV
+	var dayToCheck int
+	var days int
 
-	//var week e.CreateWeek
-	//fmt.Println("start of addweek")
-	//	var week e.CreateWeek
-	//	err := c.Bind(&week)
 	jsonInterface := GetJSONRawBody3(c)
-	//	fmt.Printf("the stringigy: %s\n", test)
 
-	//	jsonBytes, err := json.Marshal(jsonInterface)
-	//	if err != nil {
+	usherGroups := GetStringArrayDataFromJSONByKey(jsonInterface, "UsherGroup")
 
-	//	}
-	//var monthDays = 0
-	//	boot := json.Unmarshal(test, &e.CreateWeek)
-	//fmt.Printf("the helloa: %s\n", jsonBytes)
-	/*endDay := gjson.GetBytes(test2, "end.day")
-	endMonth := gjson.GetBytes(test2, "end.month")
-	endYear := gjson.GetBytes(test2, "end.year")
-	startDay := gjson.GetBytes(test2, "start.day") */
-	massTimeDay, err := GetDataFromJSONByKey(jsonInterface, "massTime.day")
-	massTimeMonth, err := GetDataFromJSONByKey(jsonInterface, "massTime.month")
-	massTimeYear, err := GetDataFromJSONByKey(jsonInterface, "massTime.year")
-	massTimeHour, err := GetDataFromJSONByKey(jsonInterface, "massTime.hour")
-	massTimeMinute, err := GetDataFromJSONByKey(jsonInterface, "massTime.minute")
-	startYear, err := GetDataFromJSONByKey(jsonInterface, "start.year")
-	startMonth, err := GetDataFromJSONByKey(jsonInterface, "start.month")
+	for i := 0; i < len(usherGroups); i++ {
+		usherGroup := usherGroups[i]
+		json.Unmarshal([]byte(usherGroup), &UsherGroup)
+		usherGroupData, err := m.GetUsherGroupById(UsherGroup.Value)
 
-	//endDay, err := GetDataFromJSONByKey(jsonInterface, "end.day")
-	startDay, err := GetDataFromJSONByKey(jsonInterface, "start.day")
-	endDay, err := GetDataFromJSONByKey(jsonInterface, "end.day")
+		if err != nil {
 
-	endMonth, err := GetDataFromJSONByKey(jsonInterface, "end.month")
+		}
+		//	massTimeHour, err := GetIntDataFromJSONByKey(jsonInterface, "massTime.hour")
+		//	massTimeMinute, err := GetIntDataFromJSONByKey(jsonInterface, "massTime.minute")
+		startYear, err := GetIntDataFromJSONByKey(jsonInterface, "range.start.year")
+		startMonth, err := GetIntDataFromJSONByKey(jsonInterface, "range.start.month")
+		startDay, err := GetIntDataFromJSONByKey(jsonInterface, "range.start.day")
+		endDay, err := GetIntDataFromJSONByKey(jsonInterface, "range.end.day")
+		endYear, err := GetIntDataFromJSONByKey(jsonInterface, "range.end.year")
+		endMonth, err := GetIntDataFromJSONByKey(jsonInterface, "range.end.month")
 
-	//	startMonth := gjson.GetBytes(jsonBytes, "start.month")
-	//	endMonth := gjson.GetBytes(jsonBytes, "end.month")
-	/*startYear := gjson.GetBytes(test2, "start.year")
-	massTimeDay := gjson.GetBytes(test2, "massTime.day")
-	massTimeHour := gjson.GetBytes(test2, "massTime.hour")
-	massTimeMinute := gjson.GetBytes(test2, "massTime.minute")
-	massTimeMonth := gjson.GetBytes(test2, "massTime.month")
-	massTimeYear := gjson.GetBytes(test2, "massTime.year") */
-	//strconv.ParseFloat(startMonth, 10)
-	/*raw := []byte(startMonth.Raw)
-	fmt.Printf("booh: %s\n", raw)
-	too, err := strconv.Atoi(string([]byte(startMonth.Raw)))
-	fmt.Printf("booh: %d\n", too)
-	fmt.Printf("json data start month: %s\n", startMonth.Num)
-	fmt.Printf("json data start month: %s\n", startMonth.Type) */
+		fmt.Printf(("about to start loop"))
+		for y := startYear; y <= endYear; y++ {
+			fmt.Printf(("about to start loop year"))
+			for i := startMonth; i <= endMonth; i++ {
+				fmt.Printf(("about to start loop month"))
+				if i == startMonth {
+					dayToCheck = startDay
+				} else {
+					dayToCheck = 1
+				}
+				if i == endMonth {
+					days = endDay
+				} else {
+					days = daysInMonth(i, y)
+				}
 
-	//dayOfWeekMassTime := daysOfWeek(massTimeMonth, massTimeDay, massTimeYear)
-	//fmt.Printf("day of week: %s\n", dayOfWeekMassTime)
+				for d := dayToCheck; d <= days; d++ {
+					//		fmt.Printf("about to start loop day 1: %s\n", usherGroupData.Day)
+					dayofWeekMass := daysOfWeek(i, d, y)
+					//		fmt.Printf("about to start loop day 2: %s\n", strings.ToLower(dayofWeekMass.String()))
+					if usherGroupData.Day == strings.ToLower(dayofWeekMass.String()) {
+						//	fmt.Printf("I am IN\n\n\n")
+						week.Day = d
+						week.Hour = usherGroupData.Hour
+						week.Minute = usherGroupData.Minute
+						week.Month = i
+						week.Year = y
+						week.UsherGroup = usherGroupData.ID
+						m.AddWeek(&week)
 
-	daytoCheck := startDay
-	var dayEndToCheck int = endDay
-
-	for i := startMonth; i <= endMonth; i++ {
-		if (daytoCheck != startDay) && (startMonth == massTimeMonth) {
-			fmt.Printf("day going reset start\n")
-			dayOfWeekMassTime := daysOfWeek(massTimeMonth, massTimeDay, massTimeYear)
-			fmt.Printf("day of the week is : %s\n", dayOfWeekMassTime)
-
-			daytoCheck = 1
-			for b := 1; b <= 8; b++ {
-				fmt.Printf("day going reset: %d\n", b)
-				checkDay := daysOfWeek(startMonth, b, massTimeYear)
-				fmt.Printf("day of the week checkday : %s\n", checkDay)
-				if dayOfWeekMassTime == checkDay {
-					daytoCheck = b
+					}
 				}
 			}
-
 		}
-		fmt.Printf("start of for month loop %d\n", i)
-		for dateLoop := true; dateLoop; {
-			fmt.Printf("begin of loop\n")
-			//			fmt.Printf("start month: %d\n", startMonth)//
-			//			fmt.Printf("massTimeMonth: %d\n", startMonth)//
-			//		fmt.Printf("startYear: %d\n", startYear)
-			//		fmt.Printf("massTimeYear: %d\n", massTimeYear)
-			fmt.Printf("massTimeDay: %d\n", massTimeDay)
-
-			fmt.Printf("startDay: %d\n", daytoCheck)
-			fmt.Printf("endDay: %d\n", endDay)
-			//	fmt.Printf("tart month: %s\n", startMonth)
-			//	fmt.Printf("json data at string: %s\n", ApplyMarshal(months))
-			//	fmt.Printf("json data start month: %d\n", i)
-
-			//if startMonth == massTimeMonth && startYear == massTimeYear {
-
-			fmt.Printf("next in loop\n")
-			var totalDays int = daysInMonth(i, startYear)
-
-			if startMonth < endMonth {
-				dayEndToCheck = totalDays
-			}
-			if daytoCheck > dayEndToCheck && (startMonth == massTimeMonth) {
-				fmt.Printf("dateLoop is false\n")
-				dateLoop = false
-				continue
-			}
-			fmt.Printf("after first check\n")
-			fmt.Printf("massTimeDay: %d\n", massTimeDay)
-			fmt.Printf("startDay: %d\n", daytoCheck)
-			if (i == massTimeMonth) && (daytoCheck < massTimeDay) {
-				fmt.Printf("reset daytocheck next in loop lalalala\n")
-				daytoCheck = massTimeDay
-			}
-
-			week.Day = daytoCheck
-			week.Hour = massTimeHour
-			week.Minute = massTimeMinute
-			week.Month = i
-			week.Year = startYear
-			fmt.Printf("befre entering model\n")
-			m.AddWeek(&week)
-			//	err := c.Bind(&week)
-
-			if daytoCheck+7 > totalDays {
-				dateLoop = false
-				fmt.Printf("over month %d\n", daytoCheck)
-			} else {
-				fmt.Printf("before  7 %d\n", daytoCheck)
-				daytoCheck = daytoCheck + 7
-				fmt.Printf("adding 7 %d\n", daytoCheck)
-				fmt.Printf("dateloop 7 %t\n", dateLoop)
-			}
-
-			//	} else {
-			//		fmt.Printf("wtf is going on\n")
-			//	}
-
-			//			startDay
-
-			//monthDays += daydInMonth
-
-		}
-
-		//	fmt.Printf("json data outside days: %d\n", massTimeDay)
-		//	fmt.Printf("json data outside days cool: %d\n", startDay)
-
-		//	fmt.Printf("json data type outside days: %s\n", reflect.TypeOf(massTimeDay))
-		//	fmt.Printf("json data type outside days cool: %s\n", reflect.TypeOf(startDay))
-
-		//	if startDay < massTimeDay {
-		//var daysbetweenStartDayAndMassTime int = int(massTimeDay) - int(startDay)
-		//
-		//fmt.Printf("json data outside dddddays: %d\n", daysbetweenStartDayAndMassTime)
-		//		daydInMonth := daysInMonth(i, startYear)
-		///	day := daysIn(startDay, startYear)
-		//		//if startDay < massTimeDay {
-
-		//	massTimeDay := startDay
-		//
-		//		fmt.Printf("json data outside days33: %d\n", daydInMonth)
-		//fmt.Printf("json data outside days cool: %d\n", daydInMonth)
-
-		//		for dateLoop := true; dateLoop; dateLoop = !true {
-
-		//monthDays += daydInMonth
-
 	}
-
-	//test, err := GetDataFromJSONByKey(months, ConvertIntToString(i))
-	if err != nil {
-
-	}
-	//	fmt.Printf("json data: %d\n", test)
-	//test, err := json.Marshal(months[i])
-	//	monthDays += testing
-
-	//fmt.Printf("json data: %d\n", monthDays)
-	//	for i := startDay; i < 5; i++ {
-	//		sum +=
-	//	}
-
-	//boot := c.Bind(&week)
-	//	if err != nil {/
-	//		return c.JSON(http.StatusBadRequest, "could not bind stuff")
-	//	}
-
-	//test5 := json.Unmarshal(test2, &week)
-
-	//	fmt.Printf("json data: %s\n", end)
-
-	//	jsonData := GetJSONRawBody(c)
-
-	//challenge := json_map["end"]
-
-	//jsonData, err := json.Marshal(c)
-	//	fmt.Printf("json data: %s\n", jsonData)
-	//fmt.Println(c.Get("start"))
-	//var week e.Week
-	//	err := c.Bind(&week)
-
-	///if err != nil {
-	//		return c.JSON(http.StatusUnprocessableEntity, err.Error())
-	//	}
-	//fmt.Println(week)
-	///	err = m.AddWeek(&week)
-
-	//if err != nil {
-	//	return c.JSON(http.StatusBadRequest, "could not find gallery listing")
-	//	}
 
 	return c.JSON(http.StatusCreated, e.SetResponse(http.StatusCreated, "ok", EmptyValue))
 

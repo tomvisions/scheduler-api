@@ -8,3 +8,8 @@ type UsherGroup struct {
 	Hour        int    `db:"hour"`
 	Minute      int    `db:"minute"`
 }
+
+type UsherGroupKV struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}

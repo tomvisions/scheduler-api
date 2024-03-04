@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"scheduler-api/db"
@@ -39,6 +40,42 @@ func AddUser(user *e.User) error {
 	if err != nil {
 		tx.Rollback()
 		return err
+	}
+
+	tx.Commit()
+
+	return nil
+}
+
+func UpdateUser(user *e.User) error {
+	const query = `UPDATE user SET name = ?, email = ?, phone = ?, description = ? WHERE id = ?`
+
+	tx, err := db.DB.Begin()
+	if err != nil {
+
+		return err
+	}
+
+	res, err := tx.Exec(query, user.Name, user.Email, user.Phone, user.Description, user.ID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if rowsAffected == 0 {
+		tx.Rollback()
+		return errors.New("User has not been affected")
+	}
+
+	if rowsAffected > 1 {
+		tx.Rollback()
+		return errors.New("Strange behaviour. Total affected is : " + string(rowsAffected))
 	}
 
 	tx.Commit()
@@ -90,10 +127,58 @@ func GetUsers(pageIndex uint64, pageSize uint64, field string, order string) ([]
 	return userList, err
 }
 
+func GetUsersByPrefix(pageIndex uint64, pageSize uint64, field string, order string, prefix string) ([]e.User, error) {
+
+	var userList []e.User
+	user := e.User{}
+
+	offset := ((pageIndex - 1) * pageSize)
+
+	orderBy := fmt.Sprintf("%s %s", field, order)
+
+	userListSQL, args, err := sg.Select("user.id, user.name, user.email, user.phone").
+		From("user").
+		Where(sg.Or{
+			sg.Like{"user.name": fmt.Sprint("%", prefix, "%")},
+			sg.Like{"user.id": fmt.Sprint("%", prefix, "%")},
+		}).
+		OrderBy(orderBy).
+		Limit(pageSize).
+		Offset(offset).
+		ToSql()
+	fmt.Println(args)
+	fmt.Printf("userListSQL: %v\n", userListSQL)
+
+	rows, err := db.DB.Queryx(userListSQL, fmt.Sprint("%", prefix, "%"), fmt.Sprint("%", prefix, "%"))
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.StructScan(&user)
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		fmt.Printf("userListSQL: %s\n", user)
+
+		userList = append(userList, user)
+	}
+	///	test := fmt.Sprintf("{data: %s}", userList)
+
+	err = rows.Err()
+
+	return userList, err
+}
+
 func GetUserById(id string) (e.User, error) {
 	var user e.User
 
-	userSQL, args, err := sg.Select("user.id, user.name, user.description, user.email, user.email, (SELECT CAST(CONCAT('[',GROUP_CONCAT(JSON_OBJECT('Id', `usher_group`.`id`)),']') as JSON) FROM usher_group LEFT JOIN user_usher_group ON user_usher_group.usher_group = usher_group.id where user_usher_group.user = user.id) as usher_group").
+	userSQL, args, err := sg.Select("user.id, user.name, user.description, user.email, user.phone, (SELECT CAST(CONCAT('[',GROUP_CONCAT(JSON_OBJECT('label', `usher_group`.`name`, 'value', `usher_group`.`id`)),']') as JSON) FROM usher_group LEFT JOIN user_usher_group ON user_usher_group.usher_group = usher_group.id where user_usher_group.user = user.id) as usher_group").
 		From("user").
 		Where(sg.Eq{"user.id": id}).ToSql()
 
