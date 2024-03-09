@@ -54,6 +54,7 @@ type User struct {
 	Phone       string `db:"phone"`
 	//UsherGroups []UsherGroups `db:"usher_groups"`
 	UsherGroup *string `db:"usher_group"`
+	Password   string  `db:"password"`
 }
 
 type UserWrite struct {

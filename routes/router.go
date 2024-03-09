@@ -13,6 +13,7 @@ func InitRoutes(e *echo.Echo) {
 	SetUserRoutes(e)
 	SetUsherGroupRoutes(e)
 	SetWeekRoutes(e)
+	SetAuthRoutes(e)
 	//    SetOwnerRoutes(e)
 	//  SetUserRoutes(e)
 

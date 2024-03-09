@@ -17,14 +17,14 @@ func AddUsherGroup(usherGroup *e.UsherGroup) error {
 	id = strings.Replace(id, " ", "-", -1)
 	fmt.Printf("id2 valueL: %s\n", id)
 
-	const query = `INSERT INTO usher_group (id, name, description, day, hour, minute) VALUES (?, ?, ?, ?, ?, ?)`
+	const query = `INSERT INTO usher_group (id, name, description, day, hour, minute, usher_amount) VALUES (?, ?, ?, ?, ?, ?, ?)`
 	tx, err := db.DB.Begin()
 
 	if err != nil {
 		return err
 	}
 
-	_, err = tx.Exec(query, id, usherGroup.Name, usherGroup.Description, usherGroup.Day, usherGroup.Hour, usherGroup.Minute)
+	_, err = tx.Exec(query, id, usherGroup.Name, usherGroup.Description, usherGroup.Day, usherGroup.Hour, usherGroup.Minute, usherGroup.UsherAmount)
 	fmt.Printf("err valueL: %s\n", err)
 	if err != nil {
 		tx.Rollback()
@@ -41,7 +41,7 @@ func GetUsherGroupsKV() ([]e.UsherGroup, error) {
 	var usherGroupList []e.UsherGroup
 	usherGroup := e.UsherGroup{}
 
-	usherGroupSQL, args, err := sg.Select("usher_group.id, usher_group.name, usher_group.description, usher_group.hour, usher_group.minute, usher_group.day").
+	usherGroupSQL, args, err := sg.Select("usher_group.id, usher_group.name, usher_group.description, usher_group.hour, usher_group.minute, usher_group.day, usher_group.usher_amount").
 		From("usher_group").
 		ToSql()
 
@@ -80,14 +80,11 @@ func GetUsherGroups(pageIndex uint64, pageSize uint64, field string, order strin
 
 	orderBy := fmt.Sprintf("%s %s", field, order)
 
-	usherGroupSQL, args, err := sg.Select("usher_group.id, usher_group.name, usher_group.description, usher_group.hour, usher_group.minute, usher_group.day").
+	usherGroupSQL, args, err := sg.Select("usher_group.id, usher_group.name, usher_group.description, usher_group.hour, usher_group.minute, usher_group.day, usher_group,usher_amount").
 		From("usher_group").
 		OrderBy(orderBy).
 		Limit(pageSize).
 		Offset(offset).
-		//		LeftJoin("category ON gallery.category = category.id").
-		//		LeftJoin("tag ON tag.id = gallery.tag").
-		//		Where("gallery.main_featured = 1").
 		ToSql()
 
 	fmt.Println(usherGroupSQL)
@@ -119,7 +116,7 @@ func GetUsherGroups(pageIndex uint64, pageSize uint64, field string, order strin
 func GetUsherGroupById(id string) (e.UsherGroup, error) {
 	fmt.Println(id)
 	usherGroup := e.UsherGroup{}
-	usherGroupSQL, args, err := sg.Select("usher_group.id, usher_group.name, usher_group.description, usher_group.day, usher_group.day, usher_group.hour, usher_group.minute").
+	usherGroupSQL, args, err := sg.Select("usher_group.id, usher_group.name, usher_group.description, usher_group.day, usher_group.day, usher_group.hour, usher_group.minute, usher_group.usher_amount").
 		From("usher_group").
 		Where(sg.Eq{"id": id}).ToSql()
 

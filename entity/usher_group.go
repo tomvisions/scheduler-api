@@ -7,6 +7,7 @@ type UsherGroup struct {
 	Day         string `db:"day"`
 	Hour        int    `db:"hour"`
 	Minute      int    `db:"minute"`
+	UsherAmount int    `db:"usher_amount"`
 }
 
 type UsherGroupKV struct {

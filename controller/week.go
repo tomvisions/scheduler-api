@@ -2,8 +2,11 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"math/rand"
 	"net/http"
+	"os"
 	e "scheduler-api/entity"
 	m "scheduler-api/model"
 	"strings"
@@ -24,10 +27,13 @@ func daysOfWeek(m int, d int, year int) time.Weekday {
 
 func AddWeek(c echo.Context) error {
 	var week e.Week
-	//var jsonMap map[string]interface{}
+	var schedule e.Schedule
+	var unavailable e.Unavaialble
 	var UsherGroup e.UsherGroupKV
 	var dayToCheck int
 	var days int
+	var userUsherGroup e.UserUsherGroup
+	var peopleAmount int
 
 	jsonInterface := GetJSONRawBody3(c)
 
@@ -41,8 +47,6 @@ func AddWeek(c echo.Context) error {
 		if err != nil {
 
 		}
-		//	massTimeHour, err := GetIntDataFromJSONByKey(jsonInterface, "massTime.hour")
-		//	massTimeMinute, err := GetIntDataFromJSONByKey(jsonInterface, "massTime.minute")
 		startYear, err := GetIntDataFromJSONByKey(jsonInterface, "range.start.year")
 		startMonth, err := GetIntDataFromJSONByKey(jsonInterface, "range.start.month")
 		startDay, err := GetIntDataFromJSONByKey(jsonInterface, "range.start.day")
@@ -50,11 +54,8 @@ func AddWeek(c echo.Context) error {
 		endYear, err := GetIntDataFromJSONByKey(jsonInterface, "range.end.year")
 		endMonth, err := GetIntDataFromJSONByKey(jsonInterface, "range.end.month")
 
-		fmt.Printf(("about to start loop"))
 		for y := startYear; y <= endYear; y++ {
-			fmt.Printf(("about to start loop year"))
 			for i := startMonth; i <= endMonth; i++ {
-				fmt.Printf(("about to start loop month"))
 				if i == startMonth {
 					dayToCheck = startDay
 				} else {
@@ -67,21 +68,98 @@ func AddWeek(c echo.Context) error {
 				}
 
 				for d := dayToCheck; d <= days; d++ {
-					//		fmt.Printf("about to start loop day 1: %s\n", usherGroupData.Day)
+					peopleAmount = usherGroupData.UsherAmount
 					dayofWeekMass := daysOfWeek(i, d, y)
-					//		fmt.Printf("about to start loop day 2: %s\n", strings.ToLower(dayofWeekMass.String()))
 					if usherGroupData.Day == strings.ToLower(dayofWeekMass.String()) {
-						//	fmt.Printf("I am IN\n\n\n")
+						fmt.Printf("\n\n\nstart day\n\n\n")
 						week.Day = d
 						week.Hour = usherGroupData.Hour
 						week.Minute = usherGroupData.Minute
 						week.Month = i
 						week.Year = y
 						week.UsherGroup = usherGroupData.ID
-						m.AddWeek(&week)
+						weekId, err := m.AddWeek(&week)
+						userUsherGroup.UsherGroup = usherGroupData.ID
+						userUsherGroup.Number = 0
+						usersInUsherGroup, err := m.GetUserUsherGroupByUsherGroup(userUsherGroup)
 
+						if err != nil {
+
+						}
+
+						if len(usersInUsherGroup) < peopleAmount {
+							fmt.Printf("\n\n\nless then user amount\n\n\n")
+
+							peopleAmount = usherGroupData.UsherAmount - len(usersInUsherGroup)
+
+							unavailable.UsherGroup = usherGroupData.ID
+							m.RemoveUnAvailable(&unavailable)
+
+							for last := 0; last < len(usersInUsherGroup); last++ {
+								schedule.UserUsherGroup = usersInUsherGroup[last].ID
+								schedule.Week = weekId
+								m.AddSchedule(&schedule)
+								unavailable.UserUsherGroup = usersInUsherGroup[last].ID
+								unavailable.UsherGroup = usherGroupData.ID
+								m.AddUnAvailable(&unavailable)
+							}
+
+							usersInUsherGroup, err = m.GetUserUsherGroupByUsherGroup(userUsherGroup)
+							if err != nil {
+
+							}
+							/*
+								unavailable.UsherGroup = usherGroupData.ID
+								m.RemoveUnAvailable(&unavailable)
+								number := uint64(usherGroupData.UsherAmount - len(usersInUsherGroup))
+								fmt.Printf("\n\n\nthe number: %d", number)
+								userUsherGroup.Number = number
+								userUsherGroup.UsherGroup = usherGroupData.ID
+								usersInUsherGroupTemp, err := m.GetUserUsherGroupByUsherGroup(userUsherGroup)
+								if err != nil {
+									panic(err)
+								}
+								usersInUsherGroup = append(usersInUsherGroup, usersInUsherGroupTemp...)
+								//							fmt.Printf("made it here")
+
+								//							os.Exit(3)
+							*/
+						}
+
+						for people := 0; people < peopleAmount; people++ {
+							fmt.Printf("\n\n\nstart people\n\n\n")
+
+							fmt.Printf("the list %v", usersInUsherGroup)
+							rand.Seed(time.Now().Unix())
+							n := rand.Intn(len(usersInUsherGroup))
+							schedule.UserUsherGroup = usersInUsherGroup[n].ID
+							schedule.Week = weekId
+							err := m.AddSchedule(&schedule)
+							unavailable.UserUsherGroup = usersInUsherGroup[n].ID
+							unavailable.UsherGroup = usherGroupData.ID
+
+							m.AddUnAvailable(&unavailable)
+							if err != nil {
+								fmt.Printf("error add achedule: %s:", err)
+							}
+
+							fmt.Printf("\n\n\n before slice: %v\n\n\n", usersInUsherGroup)
+							//	slice := []int{1, 2, 3, 4}
+							fmt.Printf("\n\n\nthe number: %d\n\n", n)
+							fmt.Printf("\n\n\nthe number remaining: %d\n\n", len(usersInUsherGroup))
+							usersInUsherGroup, err = remove(usersInUsherGroup, n)
+
+							fmt.Printf("\n\n\n after slice: %v\n\n\n", usersInUsherGroup)
+
+							//	fmt.Println(slice) // [1 3 4]
+							//	RemoveIndex(usersInUsherGroup, n)
+							fmt.Printf("\n\n\n end people\n\n\n")
+						}
 					}
 				}
+				fmt.Printf("made it here")
+				os.Exit(3)
+
 			}
 		}
 	}
@@ -89,6 +167,13 @@ func AddWeek(c echo.Context) error {
 	return c.JSON(http.StatusCreated, e.SetResponse(http.StatusCreated, "ok", EmptyValue))
 
 	//return c.JSON(http.StatusOK, gallery)
+}
+
+func remove(s []e.UserUsherGroup, index int) ([]e.UserUsherGroup, error) {
+	if index >= len(s) {
+		return nil, errors.New("Out of Range Error")
+	}
+	return append(s[:index], s[index+1:]...), nil
 }
 
 func GetWeeks(c echo.Context) error {
